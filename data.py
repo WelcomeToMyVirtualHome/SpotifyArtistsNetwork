@@ -72,14 +72,14 @@ class Data:
             sleep(10)
     
     @staticmethod
-    def save_data(data, filename):
+    def save(data, filename):
         _json = json.dumps(data)
         f = open(filename, "w")
         f.write(_json)
         f.close()
 
     @staticmethod
-    def load_data(filename):
+    def load(filename):
         with open(filename) as json_file:
             data = json.load(json_file)
         return data

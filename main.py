@@ -12,5 +12,5 @@ if __name__ == "__main__":
     d = Data("Giuseppe Verdi", level = 2, client = spt)
     d.download_data()
     
-    Data.save_data(d.adjacency, "adjacency_l2.json")
-    Data.save_data(d.artists, "artists_l2.json")
+    Data.save(d.adjacency, "adjacency_l2.json")
+    Data.save(d.artists, "artists_l2.json")

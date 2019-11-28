@@ -22,8 +22,8 @@ class Vis:
         self.network.show("net.html")
 
 if __name__ == '__main__':
-    artists = Data.load_data("artists_l5.json")
-    adjacency = Data.load_data("adjacency_l5.json")
+    artists = Data.load("artists_l5.json")
+    adjacency = Data.load("adjacency_l5.json")
     v = Vis(artists, adjacency)
     v.init_network()
     v.show_network()

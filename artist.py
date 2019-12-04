@@ -7,12 +7,14 @@ class Artist:
         self.genres = api_dict["genres"]
 
     def get_dict(self):
-        _dict = {"name" : self.name,
+        _dict = {
+        "id" : self.id,
+        "name" : self.name,
         "popularity" : self.popularity,
         "followers" : self.followers,
         "genres" : self.genres}
         return _dict
     
-    def print(self):
-        print(f'''Name = {self.name}\nId = {self.id}\nPopularity = {self.popularity}\nFollowers = {self.followers}\nGenres = {self.genres}''')
+    def __str__(self):
+        return f'''Name = {self.name}\nId = {self.id}\nPopularity = {self.popularity}\nFollowers = {self.followers}\nGenres = {self.genres}'''
 

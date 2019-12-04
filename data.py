@@ -3,7 +3,7 @@ from pyfy import excs
 import networkx as nx
 from time import sleep
 from collections import defaultdict
-import json
+import pickle
 
 class Data:
     def __init__(self, name, level, client):
@@ -13,31 +13,43 @@ class Data:
         self.artists = dict()
         self.root = None
 
-        result = self.client.search(q = name, types = 'artist', limit = 1)
-        if len(result["artists"]["items"]) == 0:
-            print(f"No artist with name: {name}.")
+        result = self.client.search(q=name, types='artist', limit=1)
+        if len(result['artists']['items']) == 0:
+            print(f'No artist with name: {name}.')
             return
 
-        self.root = Artist(result["artists"]["items"][0])
+        self.root = Artist(result['artists']['items'][0])
         self.adjacency[self.root.id] = []
-        
         self.artists[self.root.id] = self.root.get_dict()
-        
+
+    def __str__(self):
+        s = ''
+        for key, item in self.adjacency.items():
+            s +=  self.artists[key]['name']
+            s += ' <--> '
+            s += ", ".join([self.artists[i]['name'] for i in item])
+            s += '\n'
+        return s
+
+    def __len__(self):
+        return len(self.artists)
+
     def download_data(self):
         if self.root is None:
-            print("Cannot download data: no root")
+            print('Cannot download data: no root')
             return
 
         if self.level == 0:
-            print("0 nearest neighbors")
+            print('0 nearest neighbors')
             return
         
         for i in range(self.level):
-            print(f"{i + 1} nearest neighbors")
-            [self.add_related(id) for id in list(self.adjacency)]
+            print(f'{i + 1} nearest neighbors')
+            for id in list(self.adjacency):
+                self.add_related(id)
         
     def add_related(self, id):
-        """
+        '''
         Add to adjacency list artists related to artist with name given by name parameter.
 
         Function sleeps with each call for 0.1s to avoid flooding Spotify API.
@@ -49,37 +61,38 @@ class Data:
         :param name: name of artist
         :type name: string
         :return
-        """
-        
+        '''
         try:
-            related = self.client.artist_related_artists(artist_id = id)
-            new_artists = [Artist(r) for r in related["artists"]]
+            related = self.client.artist_related_artists(artist_id=id)
+            new_artists = [Artist(r) for r in related['artists']]
             new_artists_dict = {a.id : a.get_dict() for a in new_artists}
             self.artists = {**self.artists, **new_artists_dict}
 
-            # Remove duplicate vertex names from list
-            self.adjacency[id] = list(set(self.adjacency[id] + [a.id for a in new_artists]))
+            # Append related artists to artist with given id
+            self.adjacency[id] += [a.id for a in new_artists]
 
-            # Dictionary of vertexes for artists related to root
-            new_dict = {a.id : [id] for a in new_artists}
-
-            # Append new dict to existing one
-            self.adjacency = {**self.adjacency, **new_dict}
+            # Add related artists
+            for a in new_artists:
+                if a.id not in self.adjacency:
+                    self.adjacency[a.id] = [id]
             sleep(0.1)
         except excs.ApiError as e:
-            print("Error")
+            print('Error')
             print(e.msg)
             sleep(10)
     
-    @staticmethod
-    def save(data, filename):
-        _json = json.dumps(data)
-        f = open(filename, "w")
-        f.write(_json)
-        f.close()
+    def save_data(self):
+        with open(f'data/artists/artists_l{self.level}', 'wb') as outfile:
+            pickle.dump(self.artist, outfile)    
+        with open(f'data/adjacency/adjacency_l{self.level}', 'wb') as outfile:
+            pickle.dump(self.adjacency, outfile)
 
-    @staticmethod
-    def load(filename):
-        with open(filename) as json_file:
-            data = json.load(json_file)
-        return data
+    def load_data(self):
+        with open(f'data/artists/artists_l{self.level}', 'rb') as infile:
+            self.artists = pickle.load(infile)
+        with open(f'data/adjacency/adjacency_l{self.level}', 'rb') as infile:
+            self.adjacency = pickle.load(infile)
+
+        
+
+    

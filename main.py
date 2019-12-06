@@ -1,18 +1,12 @@
-from pyfy import ClientCreds, Spotify
-from artist import Artist
-from data import Data
-from vis import Vis
+from artist_data import ArtistData
 import config
 
 if __name__ == '__main__':
-    client = ClientCreds(client_id=config.CLIENT_ID, client_secret=config.CLIENT_SECRET)
-    spt = Spotify(client_creds=client)
-    spt.authorize_client_creds()
-
-    level = 4
-    d = Data('Giuseppe Verdi', level=level, client=spt)
-    d.download_data()
+    d = ArtistData('Giuseppe Verdi', level=3)
+    # d.download_data(spotify_credentials=(config.CLIENT_ID, config.CLIENT_SECRET))
     
-    # print(str(d))
-    print(f'Number of nodes = {len(d)}')
-    d.save_data()
+    d.load_data()
+    # d.save_data()
+
+    print(str(d))
+    print(f'Number of artists = {len(d)}')

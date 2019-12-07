@@ -5,10 +5,11 @@ from time import sleep
 from collections import defaultdict
 import pickle
 import pathlib
+import config
 
 class ArtistData:
-    def __init__(self, name, level):
-        self._level = level
+    def __init__(self, name, depth):
+        self._depth = depth
         self._adjacency = defaultdict(list)
         self._artists = dict()
         self._root = None
@@ -35,8 +36,8 @@ class ArtistData:
         return self._adjacency
 
     @property
-    def level(self):
-        return self._level
+    def depth(self):
+        return self._depth
 
     @property
     def name(self):
@@ -57,11 +58,11 @@ class ArtistData:
         if self._root is None:
             raise NameError(f'No data retrieved for {self._name}.')
 
-        if self._level == 0:
+        if self._depth == 0:
             print('0 nearest neighbors')
             return
         
-        for i in range(self._level):
+        for i in range(self._depth):
             print(f'{i + 1} nearest neighbors')
             for id in list(self._adjacency):
                 self.add_related(id)
@@ -103,9 +104,9 @@ class ArtistData:
         p = pathlib.Path(f'data/{name}')
         if not p.exists ():
             p.mkdir()
-        with open(f'data/{name}/artists_l{self._level}', 'wb') as outfile:
+        with open(f'data/{name}/artists_l{self._depth}', 'wb') as outfile:
             pickle.dump(self._artists, outfile)    
-        with open(f'data/{name}/adjacency_l{self._level}', 'wb') as outfile:
+        with open(f'data/{name}/adjacency_l{self._depth}', 'wb') as outfile:
             pickle.dump(self._adjacency, outfile)
 
     def load_data(self):
@@ -113,11 +114,14 @@ class ArtistData:
         p = pathlib.Path(f'data/{name}')
         if not p.exists ():
             raise NameError('Path does not exist')    
-        with open(f'data/{name}/artists_l{self._level}', 'rb') as infile:
+        with open(f'data/{name}/artists_l{self._depth}', 'rb') as infile:
             self._artists = pickle.load(infile)
-        with open(f'data/{name}/adjacency_l{self._level}', 'rb') as infile:
+        with open(f'data/{name}/adjacency_l{self._depth}', 'rb') as infile:
             self._adjacency = pickle.load(infile)
 
-        
-
-    
+if __name__ == '__main__':
+    d = ArtistData('Giuseppe Verdi', depth=3)
+    d.download_data(spotify_credentials=(config.CLIENT_ID, config.CLIENT_SECRET))
+    d.save_data()
+    print(str(d))
+    print(f'Number of artists = {len(d)}')

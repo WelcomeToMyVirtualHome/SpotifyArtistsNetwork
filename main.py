@@ -1,12 +1,18 @@
 from artist_data import ArtistData
+from network import Network
 import config
+import argparse
 
 if __name__ == '__main__':
-    d = ArtistData('Giuseppe Verdi', level=3)
-    # d.download_data(spotify_credentials=(config.CLIENT_ID, config.CLIENT_SECRET))
-    
-    d.load_data()
-    # d.save_data()
+    parser = argparse.ArgumentParser(description='Spotify Artist Network')
+    parser.add_argument('name', help='Name of artist')
+    parser.add_argument('depth', help='Depth of network', default=1, type=int)    
+    args = parser.parse_args()
 
-    print(str(d))
-    print(f'Number of artists = {len(d)}')
+    d = ArtistData(args.name, depth=args.depth)
+    d.download_data(spotify_credentials=(config.CLIENT_ID, config.CLIENT_SECRET))
+    d.save_data()
+
+    n = Network(d)
+    n.init()
+    n.draw('png')

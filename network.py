@@ -58,12 +58,13 @@ class Network:
             pos, 
             vorder=self.g.degree_property_map("in"),
             vprops=self.vproperites,
-            output_size=(3000, 3000),
+            output_size=(2000, 2000),
             vertex_pen_width=0.01,
             vertex_text_position=-.1,
             vertex_text_color=[0., 0., 0., 1.],
             edge_pen_width=1,
             bg_color=[1., 1., 1., 1.],
+            fit_view=4.,
             output=f'data/{name}/net_l{self._data.depth}.{file_format}'
             )
 
@@ -71,7 +72,7 @@ class Network:
         return gt.stats.vertex_hist(self.g, deg='total')
         
 if __name__ == '__main__':
-    data = ArtistData('Giuseppe Verdi', depth=3)
+    data = ArtistData('Giuseppe Verdi', depth=4)
     data.load_data()
 
     n = Network(data)

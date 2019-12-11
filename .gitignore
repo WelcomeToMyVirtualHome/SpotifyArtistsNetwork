@@ -90,6 +90,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+spotify/
 
 # Spyder project settings
 .spyderproject

@@ -43,7 +43,7 @@ class ArtistData:
     def name(self):
         return self._name
 
-    def download_data(self, spotify_credentials):
+    def download_data(self, spotify_credentials, force=False):
         creds = ClientCreds(client_id=spotify_credentials[0], client_secret=spotify_credentials[1])
         self._client = Spotify(client_creds=creds)
         self._client.authorize_client_creds()
@@ -51,23 +51,39 @@ class ArtistData:
         if len(result['artists']['items']) == 0:
             raise NameError(f'No artist with name: {self._name}.')
 
-        self._root = Artist(result['artists']['items'][0])
+        self._root = Artist(result['artists']['items'][0], depth=0)
         self._adjacency[self._root.id] = []
         self._artists[self._root.id] = self._root.get_dict()
+            
+        if self._depth <= 0:
+            print('0 nearest neighbors')
+            return
 
         if self._root is None:
             raise NameError(f'No data retrieved for {self._name}.')
-
-        if self._depth == 0:
-            print('0 nearest neighbors')
-            return
+            
+        if not force:
+            name = self._name.replace(' ', '')
+            existing_depth = 0
+            for i in range(0, self._depth + 1):
+                p1 = pathlib.Path(f'data/{name}/artists_l{i}')
+                p2 = pathlib.Path(f'data/{name}/adjacency_l{i}')
+                if p1.exists() and p2.exists():
+                    existing_depth = i
+            
+            if existing_depth == self._depth:
+                print('Data already exists')
+                return    
+            
+            self.load_data(existing_depth)
+            print(f'Loaded data: l_{existing_depth}')
         
-        for i in range(self._depth):
-            print(f'{i + 1} nearest neighbors')
-            for id in list(self._adjacency):
-                self.add_related(id)
+        for i in range(existing_depth + 1, self._depth + 1):
+            print(f'{i} nearest neighbors')
+            for id in list(self._artists):
+                self.add_related(id, i)
         
-    def add_related(self, id):
+    def add_related(self, id, depth):
         '''
         Add to _adjacency list _artists related to artist with name given by name parameter.
 
@@ -83,7 +99,8 @@ class ArtistData:
         '''
         try:
             related = self._client.artist_related_artists(artist_id=id)
-            new_artists = [Artist(r) for r in related['artists']]
+            new_artists = [Artist(r, depth) for r in related['artists']]
+            new_artists = [a for a in new_artists if a.id not in self._artists]
             new_artists_dict = {a.id : a.get_dict() for a in new_artists}
             self._artists = {**self._artists, **new_artists_dict}
 
@@ -99,29 +116,31 @@ class ArtistData:
             print(e.msg)
             sleep(10)
     
-    def save_data(self):
+    def save_data(self, depth=None):
+        if depth is None:
+            depth = self._depth
         name = self._name.replace(' ', '')
         p = pathlib.Path(f'data/{name}')
         if not p.exists ():
             p.mkdir()
-        with open(f'data/{name}/artists_l{self._depth}', 'wb') as outfile:
+        with open(f'data/{name}/artists_l{depth}', 'wb') as outfile:
             pickle.dump(self._artists, outfile)    
-        with open(f'data/{name}/adjacency_l{self._depth}', 'wb') as outfile:
+        with open(f'data/{name}/adjacency_l{depth}', 'wb') as outfile:
             pickle.dump(self._adjacency, outfile)
 
-    def load_data(self):
+    def load_data(self, depth=None):
+        if depth is None:
+            depth = self._depth
         name = self._name.replace(' ', '')
         p = pathlib.Path(f'data/{name}')
         if not p.exists ():
             raise NameError('Path does not exist')    
-        with open(f'data/{name}/artists_l{self._depth}', 'rb') as infile:
+        with open(f'data/{name}/artists_l{depth}', 'rb') as infile:
             self._artists = pickle.load(infile)
-        with open(f'data/{name}/adjacency_l{self._depth}', 'rb') as infile:
+        with open(f'data/{name}/adjacency_l{depth}', 'rb') as infile:
             self._adjacency = pickle.load(infile)
 
 if __name__ == '__main__':
-    d = ArtistData('Giuseppe Verdi', depth=3)
+    d = ArtistData('Giuseppe Verdi', depth=5)
     d.download_data(spotify_credentials=(config.CLIENT_ID, config.CLIENT_SECRET))
     d.save_data()
-    print(str(d))
-    print(f'Number of artists = {len(d)}')

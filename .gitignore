@@ -104,3 +104,6 @@ spotify/
 
 # mypy
 .mypy_cache/
+
+# files
+*.pdf

@@ -10,7 +10,9 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     d = ArtistData(args.name, depth=args.depth)
-    d.download_data(spotify_credentials=(config.CLIENT_ID, config.CLIENT_SECRET))
+    creds = (config.CLIENT_ID, config.CLIENT_SECRET)
+    d.download_data(spotify_credentials=creds)
+    d.download_tracks(spotify_credentials=creds)
     d.save_data()
 
     n = Network(d)

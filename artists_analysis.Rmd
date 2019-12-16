@@ -1,0 +1,123 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.2'
+      jupytext_version: 1.3.0
+  kernelspec:
+    display_name: spotify
+    language: python
+    name: spotify
+---
+
+```{python}
+from artist_data import ArtistData
+from collections import deque
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import numpy as np
+import pandas as pd
+from collections import Counter
+```
+
+# Loading artist dict to data frame
+
+```{python}
+depth = 4
+name = 'Giuseppe Verdi'
+data = ArtistData(name, depth=depth)
+data.load_artists()
+data.load_adjacency()
+    
+df = pd.DataFrame.from_dict(data.artists, orient='index')
+df.reset_index()
+```
+
+# Loading tracks data
+
+```{python}
+data.load_tracks()
+data.tracks
+```
+
+```{python}
+tracks = data.tracks.drop('id', axis='columns')
+tracks = tracks.groupby('artist').mean()
+tracks = tracks.reset_index()
+```
+
+```{python}
+df = df.rename(columns={'id': 'artist'})
+df = df.merge(tracks, left_on='artist', right_on='artist')
+```
+
+```{python}
+df
+```
+
+# Overall analysis
+
+
+```{python}
+genres = df.explode('genres')['genres'].fillna('nan')
+counter = Counter(genres)
+counter = [(key, item) for key, item in sorted(counter.items(), key=lambda x: x[1], reverse=True) if key != 'nan']
+
+genres_limit = 10
+counter = counter[0:genres_limit]
+keys, values = zip(*counter)
+
+plt.bar(x=keys, height=values)
+plt.xticks(rotation=90)
+plt.show()
+```
+
+```{python}
+followers = np.array(df['followers'])
+plt.hist(followers, bins=100)
+plt.show()
+```
+
+```{python}
+popularity = np.array(df['popularity'])
+plt.hist(popularity)
+plt.show()
+```
+
+#  Slicing
+
+```{python}
+fig, axs = plt.subplots(depth + 1,3, figsize=(15, 25), facecolor='w', edgecolor='k')
+fig.subplots_adjust(hspace=1.2, wspace=.2)
+axs = axs.ravel()
+
+for i in range(depth + 1):
+    df_depth = df[df['depth'] == i]
+    genres = df_depth.explode('genres')['genres'].fillna('nan')
+    counter = Counter(genres)
+    counter = [(key, item) for key, item in sorted(counter.items(), key=lambda x: x[1], reverse=True) if key != 'nan']
+
+    limit = 10
+    counter = counter[0:limit]
+    keys, values = zip(*counter)
+    axs[i * 3].bar(x=keys, height=values)
+    axs[i * 3].set_title(f'Top Genres {genres_limit}, depth {i}')
+    plt.setp(axs[i * 3].get_xticklabels(), rotation=90)
+    
+    followers = np.array(df_depth["followers"])
+    axs[1 + i * 3].hist(followers, bins=100)
+    axs[1 + i * 3].get_xaxis().set_major_formatter(mtick.FormatStrFormatter('%.2e'))
+    axs[1 + i * 3].set_title(f'Followers, depth {i}')
+    plt.setp(axs[1 + i * 3].get_xticklabels(), rotation=90)
+    
+    popularity = np.array(df_depth["popularity"])
+    axs[2 + i * 3].hist(popularity)
+    axs[2 + i * 3].set_title(f'Popularity, depth {i}')
+    
+```
+
+```{python}
+
+```

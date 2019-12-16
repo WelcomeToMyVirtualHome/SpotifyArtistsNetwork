@@ -1,7 +1,4 @@
-graph-tools==1.0
-matplotlib==3.0.2
+igraph==0.1.11
 numpy==1.17.2
-pycairo==1.16.2
-pyfy==2.0.2
-PyGObject==3.34.0
+pandas==0.25.3
 
